@@ -1,16 +1,25 @@
 import mongoose from "mongoose";
-import config from "../../config/default";
 import { logger } from "./logging";
 
-async function connectToDb() {
-  const dbUri = config.dbUri!;
+class DatabaseConfig {
+  connect = (url: string) => {
+    return new Promise<void>((resolve, reject) => {
+      mongoose
+        .connect(url)
+        .then(() => {
+          logger.info(`Mongo Db Connected: ${mongoose.connection.host}`);
+          resolve(); // Resolve promise setelah koneksi berhasil
+        })
+        .catch((error) => {
+          logger.error(`Error connecting to MongoDB: ${error}`);
+          reject(error); // Reject promise jika terjadi kesalahan
+        });
+    });
+  };
 
-  try {
-    const conn = await mongoose.connect(dbUri);
-    logger.info(`Mongo Db Connected: ${conn.connection.host}`);
-  } catch (e) {
-    process.exit(1);
-  }
+  disconnect = () => {
+    mongoose.connection.close();
+  };
 }
 
-export default connectToDb;
+export default new DatabaseConfig();
